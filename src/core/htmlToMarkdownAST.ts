@@ -66,8 +66,7 @@ export function htmlToMarkdownAST(element: Element, options?: ConversionOptions,
                     });
                 } else {
                     // Process the link as usual
-                    // Use '#' only if attribute is missing (null), not if it's empty string
-                    let href = hrefAttr !== null ? hrefAttr : '#';
+                    let href = elem.getAttribute('href') || '';
                     
                     // Resolve the URL using baseUrl if provided, but not for fragment identifiers
                     if (options?.baseUrl && !isFragmentIdentifier(href)) {

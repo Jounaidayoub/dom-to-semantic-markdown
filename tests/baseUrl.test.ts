@@ -89,7 +89,7 @@ describe('Base URL resolution', () => {
             overrideDOMParser: new dom.window.DOMParser(),
             baseUrl: 'https://example.com'
         });
-        expect(markdown.trim()).toBe('[No href](#)');
+        expect(markdown.trim()).toBe('[No href](https://example.com/)');
     });
 
     test('resolves multiple relative links with baseUrl', () => {
