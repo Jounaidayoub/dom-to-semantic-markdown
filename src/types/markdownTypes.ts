@@ -122,6 +122,13 @@ export interface ConversionOptions {
    */
     websiteDomain?: string;
   /**
+   * The base URL to use for resolving relative URLs. When provided, relative URLs
+   * in href and src attributes will be resolved against this base URL.
+   * This is particularly useful in Chrome extension contexts where the default
+   * URL resolution would use chrome-extension:// URLs.
+   */
+    baseUrl?: string;
+  /**
    * Whether to extract the main content of the HTML, ignoring elements like headers and footers.
    */
     extractMainContent?: boolean;

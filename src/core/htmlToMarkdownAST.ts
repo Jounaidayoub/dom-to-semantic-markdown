@@ -1,5 +1,6 @@
 import {ConversionOptions, MetaDataNode, SemanticMarkdownAST} from "../types/markdownTypes";
 import {_Node} from "./ElementNode";
+import {resolveUrl} from "./urlUtils";
 
 export function htmlToMarkdownAST(element: Element, options?: ConversionOptions, indentLevel: number = 0): SemanticMarkdownAST[] {
     let result: SemanticMarkdownAST[] = [];
@@ -38,9 +39,11 @@ export function htmlToMarkdownAST(element: Element, options?: ConversionOptions,
                 // Add a new line after the paragraph
                 result.push({type: 'text', content: '\n\n'});
             } else if (elem.tagName.toLowerCase() === 'a') {
-                debugLog(`Link: '${(elem as HTMLAnchorElement).href}' with text '${elem.textContent}'`);
+                // Get href from attribute instead of property to avoid chrome-extension:// resolution
+                const hrefAttr = elem.getAttribute('href');
+                debugLog(`Link: '${hrefAttr}' with text '${elem.textContent}'`);
                 // Check if the href is a data URL for an image
-                if (typeof (elem as HTMLAnchorElement).href === 'string' && (elem as HTMLAnchorElement).href.startsWith("data:image")) {
+                if (typeof hrefAttr === 'string' && hrefAttr.startsWith("data:image")) {
                     // If it's a data URL for an image, skip this link
                     result.push({
                         type: 'link',
@@ -49,13 +52,20 @@ export function htmlToMarkdownAST(element: Element, options?: ConversionOptions,
                     });
                 } else {
                     // Process the link as usual
-                    let href = (elem as HTMLAnchorElement).href;
+                    // Use '#' only if attribute is missing (null), not if it's empty string
+                    let href = hrefAttr !== null ? hrefAttr : '#';
+                    
+                    // Resolve the URL using baseUrl if provided, but not for fragments
+                    if (options?.baseUrl && href !== '#') {
+                        href = resolveUrl(href, options.baseUrl);
+                    }
+                    
+                    // Remove websiteDomain prefix if it matches
                     if (typeof href === 'string') {
                         href = options?.websiteDomain && href.startsWith(options.websiteDomain) ?
                             href.substring(options.websiteDomain.length) : href;
-                    } else {
-                        href = '#'; // Use a default value when href is not a string
                     }
+                    
                     // if all children are text,
                     if (Array.from(elem.childNodes).every(_ => _.nodeType === _Node.TEXT_NODE)) {
                         result.push({
@@ -72,26 +82,50 @@ export function htmlToMarkdownAST(element: Element, options?: ConversionOptions,
                     }
                 }
             } else if (elem.tagName.toLowerCase() === 'img') {
-                debugLog(`Image: src='${(elem as HTMLImageElement).src}', alt='${(elem as HTMLImageElement).alt}'`);
-                if ((elem as HTMLImageElement).src?.startsWith("data:image")) {
+                // Get src from attribute instead of property to avoid chrome-extension:// resolution
+                const srcAttr = elem.getAttribute('src');
+                const altAttr = elem.getAttribute('alt') || '';
+                debugLog(`Image: src='${srcAttr}', alt='${altAttr}'`);
+                if (srcAttr?.startsWith("data:image")) {
                     result.push({
                         type: 'image',
                         src: '-',
-                        alt: escapeMarkdownCharacters((elem as HTMLImageElement).alt)
+                        alt: escapeMarkdownCharacters(altAttr)
                     });
                 } else {
-                    const src = options?.websiteDomain && (elem as HTMLImageElement).src?.startsWith(options.websiteDomain) ?
-                        (elem as HTMLImageElement).src?.substring(options.websiteDomain.length) :
-                        (elem as HTMLImageElement).src;
-                    result.push({type: 'image', src, alt: escapeMarkdownCharacters((elem as HTMLImageElement).alt)});
+                    let src = srcAttr || '';
+                    
+                    // Resolve the URL using baseUrl if provided
+                    if (options?.baseUrl) {
+                        src = resolveUrl(src, options.baseUrl);
+                    }
+                    
+                    // Remove websiteDomain prefix if it matches
+                    if (options?.websiteDomain && src?.startsWith(options.websiteDomain)) {
+                        src = src.substring(options.websiteDomain.length);
+                    }
+                    
+                    result.push({type: 'image', src, alt: escapeMarkdownCharacters(altAttr)});
                 }
             } else if (elem.tagName.toLowerCase() === 'video') {
-                debugLog(`Video: src='${(elem as HTMLVideoElement).src}', poster='${(elem as HTMLVideoElement).poster}', controls='${(elem as HTMLVideoElement).controls}'`);
+                // Get src from attribute instead of property to avoid chrome-extension:// resolution
+                const srcAttr = elem.getAttribute('src');
+                const posterAttr = elem.getAttribute('poster') || '';
+                const controlsAttr = elem.hasAttribute('controls');
+                debugLog(`Video: src='${srcAttr}', poster='${posterAttr}', controls='${controlsAttr}'`);
+                
+                let src = srcAttr || '';
+                
+                // Resolve the URL using baseUrl if provided
+                if (options?.baseUrl) {
+                    src = resolveUrl(src, options.baseUrl);
+                }
+                
                 result.push({
                     type: 'video',
-                    src: (elem as HTMLVideoElement).src,
-                    poster: escapeMarkdownCharacters((elem as HTMLVideoElement).poster),
-                    controls: (elem as HTMLVideoElement).controls
+                    src: src,
+                    poster: escapeMarkdownCharacters(posterAttr),
+                    controls: controlsAttr
                 });
             } else if (elem.tagName.toLowerCase() === 'ul' || elem.tagName.toLowerCase() === 'ol') {
                 debugLog(`${elem.tagName.toLowerCase() === 'ul' ? 'Unordered' : 'Ordered'} List`);

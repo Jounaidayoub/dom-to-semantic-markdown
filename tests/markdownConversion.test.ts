@@ -89,7 +89,7 @@ describe('HTML to Markdown conversion', () => {
 
     test('converts links', () => {
         const html = '<a href="https://example.com">Example</a>';
-        const expected = '[Example](https://example.com/)';
+        const expected = '[Example](https://example.com)';
         expect(convertHtmlToMarkdown(html, {overrideDOMParser: new dom.window.DOMParser()}).trim()).toBe(expected);
     });
 
