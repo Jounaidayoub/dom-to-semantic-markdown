@@ -313,6 +313,23 @@ const markdown = convertHtmlToMarkdown(document.body);
 console.log(markdown);
 ```
 
+### Chrome Extension
+
+When using this library in a Chrome extension, you should provide a `baseUrl` to ensure URLs are resolved correctly instead of using the extension's `chrome-extension://` protocol:
+
+```javascript
+import {convertHtmlToMarkdown} from 'dom-to-semantic-markdown';
+
+// In a Chrome extension content script or side panel
+const currentPageUrl = window.location.href; // or pass from the active tab
+const markdown = convertHtmlToMarkdown(document.body, {
+  baseUrl: currentPageUrl
+});
+console.log(markdown);
+```
+
+This ensures that relative URLs like `/about` or `contact.html` are resolved correctly against the actual page URL rather than the extension's internal URL.
+
 ### Node.js
 
 ```javascript
@@ -349,6 +366,7 @@ Converts an HTML Element to semantic Markdown.
 ### `ConversionOptions`
 
 * `websiteDomain?: string`: The domain of the website being converted.
+* `baseUrl?: string`: The base URL to use for resolving relative URLs in href and src attributes. This is particularly useful in Chrome extension contexts where the default URL resolution would use `chrome-extension://` URLs. When provided, relative URLs will be resolved against this base URL instead of using the browser's default resolution.
 * `extractMainContent?: boolean`: Whether to extract only the main content of the page.
 * `refifyUrls?: boolean`: Whether to convert URLs to reference-style links.
 * `debug?: boolean`: Enable debug logging.
