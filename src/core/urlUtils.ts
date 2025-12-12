@@ -19,6 +19,8 @@ export function resolveUrl(url: string | null | undefined, baseUrl?: string): st
     }
     
     // If the URL is already absolute (has a protocol), return it as-is
+    // Check for protocols like http:, https:, ftp:, etc.
+    // Protocol must start with a letter and can contain letters, digits, +, -, or .
     if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url)) {
         return url;
     }

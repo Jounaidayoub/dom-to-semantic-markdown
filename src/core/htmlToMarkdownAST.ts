@@ -2,6 +2,20 @@ import {ConversionOptions, MetaDataNode, SemanticMarkdownAST} from "../types/mar
 import {_Node} from "./ElementNode";
 import {resolveUrl} from "./urlUtils";
 
+/**
+ * Checks if a URL is a data URL (e.g., data:image/png;base64,...)
+ */
+function isDataUrl(url: string | null | undefined): boolean {
+    return typeof url === 'string' && url.startsWith('data:');
+}
+
+/**
+ * Checks if a URL is a fragment identifier (e.g., #, #section)
+ */
+function isFragmentIdentifier(url: string | null | undefined): boolean {
+    return typeof url === 'string' && url.startsWith('#');
+}
+
 export function htmlToMarkdownAST(element: Element, options?: ConversionOptions, indentLevel: number = 0): SemanticMarkdownAST[] {
     let result: SemanticMarkdownAST[] = [];
 
@@ -43,7 +57,7 @@ export function htmlToMarkdownAST(element: Element, options?: ConversionOptions,
                 const hrefAttr = elem.getAttribute('href');
                 debugLog(`Link: '${hrefAttr}' with text '${elem.textContent}'`);
                 // Check if the href is a data URL for an image
-                if (typeof hrefAttr === 'string' && hrefAttr.startsWith("data:image")) {
+                if (isDataUrl(hrefAttr) && hrefAttr!.startsWith("data:image")) {
                     // If it's a data URL for an image, skip this link
                     result.push({
                         type: 'link',
@@ -55,8 +69,8 @@ export function htmlToMarkdownAST(element: Element, options?: ConversionOptions,
                     // Use '#' only if attribute is missing (null), not if it's empty string
                     let href = hrefAttr !== null ? hrefAttr : '#';
                     
-                    // Resolve the URL using baseUrl if provided, but not for fragments
-                    if (options?.baseUrl && href !== '#') {
+                    // Resolve the URL using baseUrl if provided, but not for fragment identifiers
+                    if (options?.baseUrl && !isFragmentIdentifier(href)) {
                         href = resolveUrl(href, options.baseUrl);
                     }
                     
@@ -86,7 +100,7 @@ export function htmlToMarkdownAST(element: Element, options?: ConversionOptions,
                 const srcAttr = elem.getAttribute('src');
                 const altAttr = elem.getAttribute('alt') || '';
                 debugLog(`Image: src='${srcAttr}', alt='${altAttr}'`);
-                if (srcAttr?.startsWith("data:image")) {
+                if (isDataUrl(srcAttr) && srcAttr!.startsWith("data:image")) {
                     result.push({
                         type: 'image',
                         src: '-',

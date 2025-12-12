@@ -136,4 +136,24 @@ describe('Base URL resolution', () => {
         });
         expect(markdown.trim()).toBe('[Data Link](-)');
     });
+
+    test('does not resolve fragment identifiers with baseUrl', () => {
+        const html = '<a href="#section">Section</a>';
+        const markdown = convertHtmlToMarkdown(html, {
+            overrideDOMParser: new dom.window.DOMParser(),
+            baseUrl: 'https://example.com'
+        });
+        // Fragment identifiers should not be resolved against baseUrl
+        expect(markdown.trim()).toBe('[Section](#section)');
+    });
+
+    test('does not resolve empty fragment with baseUrl', () => {
+        const html = '<a href="#">Top</a>';
+        const markdown = convertHtmlToMarkdown(html, {
+            overrideDOMParser: new dom.window.DOMParser(),
+            baseUrl: 'https://example.com'
+        });
+        // Empty fragment should remain as-is
+        expect(markdown.trim()).toBe('[Top](#)');
+    });
 });
