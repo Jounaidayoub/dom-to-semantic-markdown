@@ -57,7 +57,7 @@ export function htmlToMarkdownAST(element: Element, options?: ConversionOptions,
                 const hrefAttr = elem.getAttribute('href');
                 debugLog(`Link: '${hrefAttr}' with text '${elem.textContent}'`);
                 // Check if the href is a data URL for an image
-                if (isDataUrl(hrefAttr) && hrefAttr!.startsWith("data:image")) {
+                if (isDataUrl(hrefAttr) && (hrefAttr as string).startsWith("data:image")) {
                     // If it's a data URL for an image, skip this link
                     result.push({
                         type: 'link',
@@ -100,7 +100,7 @@ export function htmlToMarkdownAST(element: Element, options?: ConversionOptions,
                 const srcAttr = elem.getAttribute('src');
                 const altAttr = elem.getAttribute('alt') || '';
                 debugLog(`Image: src='${srcAttr}', alt='${altAttr}'`);
-                if (isDataUrl(srcAttr) && srcAttr!.startsWith("data:image")) {
+                if (isDataUrl(srcAttr) && (srcAttr as string).startsWith("data:image")) {
                     result.push({
                         type: 'image',
                         src: '-',
